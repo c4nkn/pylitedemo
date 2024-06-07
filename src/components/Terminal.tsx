@@ -24,12 +24,22 @@ const Terminal = ({ command, onCommandExecuted }: { command: string, onCommandEx
 
   useEffect(() => {
     const terminal = new Term({
+      convertEol: true,
+      windowsMode: false,
       fontFamily: "Geist Mono",
       fontSize: 12,
       theme: {
         background: "rgba(23, 23, 25, 0.25)",
       },
     });
+
+    if(!terminalRef.current) return;
+    
+    const fitAddon = new FitAddon();
+    terminal.loadAddon(fitAddon);
+    terminal.open(terminalRef.current);
+    fitAddon.fit();
+    addEventListener('resize', () => fitAddon.fit());
 
     const pty = spawn("powershell.exe", [], {
       cols: terminal.cols,
@@ -39,19 +49,13 @@ const Terminal = ({ command, onCommandExecuted }: { command: string, onCommandEx
 
     ptyRef.current = pty;
 
-    if(terminalRef.current) {
-      const fitAddon = new FitAddon();
-      terminal.loadAddon(fitAddon);
-      fitAddon.fit();
-      terminal.open(terminalRef.current);
-      pty.onData(data => terminal.write(data));
-      terminal.onData(data => pty.write(data));
-      pty.onExit(({ exitCode }) => { terminal.write(`\n\nProgram exit: ${exitCode}`); });
-    }
+    pty.onData(data => terminal.write(data));
+    terminal.onData(data => pty.write(data));
+    terminal.onResize(e => pty.resize(e.cols, e.rows));
+    pty.onExit(({ exitCode }) => { terminal.write(`\n\nProgram exit: ${exitCode}`); });
 
     return () => {
       terminal.dispose();
-      pty.clear();
       pty.kill();
     };
   }, []);

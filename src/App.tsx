@@ -16,12 +16,12 @@ import {
 } from "@/components/ui/resizable";
 import { useToast } from "@/components/ui/use-toast";
 
-
 function App() {
   const [openedFile, setOpenedFile] = useState<string | null>(getLocalStorageItem<string>('openedFile'));
   const [openedFolder, setOpenedFolder] = useState<string | null>(getLocalStorageItem<string>('openedFolder'));
 
   const [fileName, setFileName] = useState<string | null>(null);
+  const [filePath, setFilePath] = useState<string | null>(null);
   const [fileContent, setFileContent] = useState<string | null>(null);
 
   const [isSidebarCollapsed, collapseSidebar] = useState(false);
@@ -96,8 +96,9 @@ function App() {
     }
   }
 
-  const handleFileClick = (file: string, content: string) => {
-    setFileName(file);
+  const handleFileClick = (path: string, name: string, content: string) => {
+    setFilePath(path);
+    setFileName(name);
     setFileContent(content);
     console.log("File clicked event triggered: App.tsx")
   }
@@ -135,11 +136,11 @@ function App() {
         {openedFile || openedFolder ? (
           <ResizablePanelGroup direction="horizontal">
             <ResizablePanel className="bg-app-third" defaultSize={isSidebarCollapsed ? 5 : 25} minSize={isSidebarCollapsed ? 5 : 15}>
-              <Sidebar onFileClick={handleFileClick} onCollapse={toggleCollapse} />
+              <Sidebar onFileClick={handleFileClick} onCollapse={toggleCollapse} fileContent={fileContent} filePath={fileName} />
             </ResizablePanel>
             <ResizableHandle />
             <ResizablePanel defaultSize={isSidebarCollapsed ? 95 : 75} minSize={isSidebarCollapsed ? 95 : 50} className="border-s border-s-app-border">
-              <Editor fileName={fileName} fileContent={fileContent} />
+              <Editor filePath={filePath} fileName={fileName} fileContent={fileContent} />
             </ResizablePanel>
           </ResizablePanelGroup>
         ) : (

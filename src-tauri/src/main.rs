@@ -3,13 +3,9 @@
 #![allow(non_snake_case)]
 
 mod file;
+mod designer;
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
+use which::which;
 use std::process::Command;
 
 #[tauri::command]
@@ -35,14 +31,25 @@ fn get_python_exec_path() -> String {
     path.to_string()
 }
 
+#[tauri::command]
+fn get_graphviz_dot_path() -> String {
+    match which("dot") {
+        Ok(path) => path.to_string_lossy().to_string(),
+        Err(e) => format!("Error finding Graphviz dot: {:?}", e),
+    }
+}
+
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
-            greet, 
             get_python_version,
+            get_graphviz_dot_path,
             get_python_exec_path,
             file::get_files_and_subdirs, 
-            file::read_file_content
+            file::read_file_content,
+            file::find_in_files,
+            file::save_file,
+            designer::generate_tkinter_code
         ])
         .plugin(tauri_plugin_pty::init())
         .run(tauri::generate_context!())

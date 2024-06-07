@@ -37,41 +37,37 @@ privileged_conversion_rules = {
 
 def l2pseudo(to_pseudo):
     for line_index, line in enumerate(to_pseudo):
-        line = str(line)
+        stripped_line = line.strip()
         indent = re.match(r'\s*', line).group()
 
-        if line.strip().startswith("print"):
-            to_pseudo[line_index] = indent + convert_print_statement(line)
+        if stripped_line.startswith("print"):
+            to_pseudo[line_index] = indent + convert_print_statement(stripped_line)
             continue
-        
-        line = re.split(r'(\s+)', line)
-        
+
+        words = re.split(r'(\s+)', stripped_line)
+
         for key, value in prefix_conversion_rules.items():
-            if key in line:
-                if not str(line[0]) == '':
-                    line[0] = value + line[0]
+            if key in words:
+                key_index = words.index(key)
+                if key_index > 0:
+                    words[key_index - 1] = value + words[key_index - 1]
                 else:
-                    line[2] = value + line[2]
-        
+                    words[key_index + 1] = value + words[key_index + 1]
+
         for key, value in conversion_rules.items():
-            for word in line:
-                if key == str(word):
-                    line[line.index(word)] = value
-        
+            words = [value if word == key else word for word in words]
+
         for key, value in privileged_conversion_rules.items():
-            for word in line:
-                line[line.index(word)] = word.replace(key, value)
-        
-        for key, value in prefix_conversion_rules.items():
-            for word in line:
-                if word == key:
-                    del line[line.index(word)]
-        
-        to_pseudo[line_index] = "".join(line)
+            words = [word.replace(key, value) for word in words]
+
+        for key in prefix_conversion_rules.keys():
+            words = [word for word in words if word != key]
+
+        to_pseudo[line_index] = indent + "".join(words).replace("  ", " ")
     return to_pseudo
 
 def convert_print_statement(line):
-    content = line.strip()[6:-1]
+    content = line[6:-1].strip()
 
     if content.startswith('f'):
         content = content[1:].strip('"\'')
@@ -85,15 +81,6 @@ def convert_python_code_to_pseudo(code_string):
     return "\n".join(work_file)
 
 if __name__ == "__main__":
-    python_code = """def factorial(x):
-
-    if x == 1:
-        return 1
-    else:
-        return (x * factorial(x-1))
-
-num = 3
-print("The factorial of", num, "is", factorial(num))"""
-    # python_code = sys.argv[1]
+    python_code = sys.argv[1]
     pseudo_code = convert_python_code_to_pseudo(python_code)
     print(pseudo_code)

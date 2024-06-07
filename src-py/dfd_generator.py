@@ -1,5 +1,11 @@
+import datetime
 import re
+import sys
 from graphviz import Digraph
+from subprocess import check_call
+
+filename = ""
+current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
 def parse_pseudocode(pseudocode):
     functions = re.findall(r'FUNCTION (\w+)\(.*?\):', pseudocode)
@@ -21,14 +27,14 @@ def analyze_code(functions, variables, pseudocode):
 
     return processes, data_stores, data_flows
 
-def generate_dfd(processes, data_stores, data_flows):
+def generate_dfd(processes, data_stores, data_flows, output_path):
     dot = Digraph()
 
-    dot.attr('node', shape='record')
-    
+    dot.attr('node', shape='record', style='filled', fillcolor='lightgrey')
     for i, data_store in enumerate(data_stores):
         dot.node(f'ds{i}', label=f"<f0> D{i + 1}|<f1> {data_store}")
 
+    dot.attr('node', shape='Mrecord', style='filled', fillcolor='lightblue')
     for i, process in enumerate(processes):
         dot.node(f'p{i}', label=f"{{<f0> {i + 1}.0|<f1> {process}}}", shape='Mrecord')
 
@@ -54,19 +60,20 @@ def generate_dfd(processes, data_stores, data_flows):
         if source_node and target_node:
             dot.edge(source_node, target_node)
 
-    dot.render('dfd', format='png', view=True)
+    filename = output_path + "\\output" + current_time + ".dot"
+    dot.render(filename=filename, format='png', view=True)
 
-pseudocode = """FUNCTION factorial(x):
+def main():
+    pseudocode = sys.argv[1]
+    output_dot_path = sys.argv[2]
+    dot_sys_path = sys.argv[3]
 
-    IF x EQUALS 1:
-        RETURN 1
-    ELSE:
-        RETURN (x * factorial(x-1))
+    functions, variables = parse_pseudocode(pseudocode)
+    processes, data_stores, data_flows = analyze_code(functions, variables, pseudocode)
+    generate_dfd(processes, data_stores, data_flows, output_dot_path)
 
-SET num TO 3
-PRINT "The factorial of", num, "is", factorial(num)
-"""
+    output_image_path = output_dot_path + "\\output" + current_time + ".png"
+    check_call([dot_sys_path,'-Tpng', filename,'-o', output_image_path])
 
-functions, variables = parse_pseudocode(pseudocode)
-processes, data_stores, data_flows = analyze_code(functions, variables, pseudocode)
-generate_dfd(processes, data_stores, data_flows)
+if __name__ == "__main__":
+    main()

@@ -10,7 +10,7 @@ import { FileDirectoryFillIcon } from "@primer/octicons-react";
 import { DocumentTextIcon } from '@heroicons/react/24/solid'
 import { getLocalStorageItem } from "@/utils/LocalStorage";
 
-const Explorer = ({ directory, level = 0, onFileClick }: { directory: string | null, level?: number, onFileClick: (file: string, content: string) => void }) => {
+const Explorer = ({ directory, level = 0, onFileClick }: { directory: string | null, level?: number, onFileClick: (path: string, name: string, content: string) => void }) => {
   const [content, setContent] = useState<string[]>([]);
 
   let activeTab: { fileId: number; fileName: string; fileContent: string; } | undefined;
@@ -65,7 +65,7 @@ const Explorer = ({ directory, level = 0, onFileClick }: { directory: string | n
 
     if (content !== null) {
       if (typeof content === 'string') {
-        onFileClick(fullPath, content);
+        onFileClick(fullPath, file, content);
       }
     }
   };
